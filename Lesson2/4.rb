@@ -1,8 +1,6 @@
 hash_result = {}
-vowels = "aeiou"
-i = 1
-("a".."z").each { |l| 
-    hash_result[l] = i if vowels.include?(l)
-    i += 1
-}
+vowels = "aeiou".split("")
+alphabet = "a".."z"
+
+vowels.each { |l| hash_result[l] = alphabet.find_index(l).next }
 puts hash_result

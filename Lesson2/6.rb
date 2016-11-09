@@ -5,12 +5,19 @@ loop do
     goods_name = gets.chomp
     break if goods_name == "стоп" || goods_name == "stop"
 
-    puts "Введите цену за единицу товара:"
-    price = gets.chomp.to_f
+    if goods[goods_name].nil?
+      puts "Введите цену за единицу товара:"
+      price = gets.chomp.to_f
 
-    puts "Введите количество товара:"
-    count = gets.chomp.to_f
-    goods[goods_name] = {price: price, count: count} 
+      puts "Введите количество товара:"
+      count = gets.chomp.to_f
+
+      goods[goods_name] = {price: price, count: count}
+    else
+      puts "Данный товар уже есть в корзине. Введите количество, которое будет добавлено к существующему товару в корзине:"
+      count = gets.chomp.to_f
+      goods[goods_name][:count] += count
+    end
 end
 
 if goods.size > 0
@@ -23,6 +30,7 @@ if goods.size > 0
         sum = price * count
         total_sum += sum
         puts "#{i}. #{goods_name} \t #{price.to_s} x #{count.to_s} = #{sum.to_s}"
+        i += 1
     }
     puts "============"
     puts "Итого: #{total_sum.to_s}"
