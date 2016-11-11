@@ -1,8 +1,10 @@
+require "./train.rb"
+
 class Station
-  attr_reader :name_station
+  attr_reader :name
 
   def initialize(name_station)
-    @name_station = name_station
+    @name = name_station
     @trains_on_station = []
   end
 
@@ -15,19 +17,11 @@ class Station
   end
 
   def print_count_trains_by_type
-    count_freigh_trains = 0
-    count_passenger_trains = 0
-    count_unknown_train = 0
-    @trains_on_station.each { |train|
-      if train.type == "freigh"
-        count_freigh_trains += 1
-      elsif train.type == "passenger"
-        count_passenger_trains += 1
-      else
-        count_unknown_train += 1
-      end
-    }
-    puts "На станции грузовых: #{count_freigh_trains.to_s}, пассажирских #{count_passenger_trains.to_s}, неизвестного типа: #{count_unknown_train.to_s} поездов"
+    puts "На станции поездов:"
+    Train::TYPES.each_with_index do |type, index|
+        count = @trains_on_station.count{ |train| train.type == type }
+        puts "#{index + 1}. #{type}: #{count}" if count > 0
+    end
   end
 
   def send_train(train)
