@@ -7,8 +7,7 @@ class Train
     @number = number
     @type = type
     @count_wagons = count_wagons
-    @speed = 0
-    @@asd = 1
+    @speed = 0    
   end
 
   def stop
