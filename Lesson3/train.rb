@@ -1,25 +1,35 @@
 class Train
-  TYPES = [FREIGHT = "Грузовой", PASSENGER = "Пассажирский"]
   attr_accessor :speed
-  attr_reader :number, :type, :count_wagons
+  attr_reader :number, :wagons
 
-  def initialize(number, type, count_wagons = 0)
+  def initialize(number)
     @number = number
-    @type = type
-    @count_wagons = count_wagons
-    @speed = 0    
+    @wagons = []
+    @speed = 0
   end
 
   def stop
     self.speed = 0
   end
 
-  def hitch_wagon
-    self.count_wagons += 1 if speed == 0
+  def hitch_wagon(wagon)
+    if stopped? && wagon.can_hitch?
+      self.wagons << wagon
+      wagon.train = self
+      true
+    else
+      false
+    end
   end
 
-  def detach_wagon
-    self.count_wagons -= 1 if speed == 0 && @count_wagons > 0
+  def detach_wagon(wagon)
+    if stopped? && @wagons.include?(wagon)
+      self.wagons.delete(wagon)
+      wagon.train = nil
+      true
+    else
+      false
+    end
   end
 
   def route=(route)
@@ -34,6 +44,8 @@ class Train
       if next_station
         @current_station = next_station
         @current_station.take_train(self)
+      else
+        self.goto_depot
       end
     end
   end
@@ -45,6 +57,8 @@ class Train
       if prev_station
         @current_station = prev_station
         @current_station.take_train(self)
+      else
+        self.goto_depot
       end
     end
   end
@@ -59,19 +73,32 @@ class Train
 
   def next_station
     next_station = @route.get_next_station(@current_station)
-    if next_station
-      puts next_station.name
-    else
-      puts "Мы находимся в конечной станции"
-    end
+    message = next_station && name_station.name || "Мы находимся в конечной станции"
+    puts message
   end
 
   def prev_station
     prev_station = @route.get_prev_station(@current_station)
-    if prev_station
-      puts prev_station.name
-    else
-      puts "Мы находимся в начальной станции"
-    end
+    message = prev_station && prev_station.name || "Мы находимся в начальной станции"
+    puts message
   end
+
+  def stopped?
+    speed.zero?
+  end
+
+  def self.type
+    "Поезд"
+  end
+
+  private
+  #для списка вагонов есть методы удаления/добавления
+  attr_writer :wagons
+  #поезд в депо отправляется методами перемещения между станциями
+  #нельзя отправить его в депо посреди пути
+  def goto_depot
+    @current_station = nil
+    @route = nil
+  end
+
 end

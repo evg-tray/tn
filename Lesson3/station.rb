@@ -1,5 +1,3 @@
-require "./train.rb"
-
 class Station
   attr_reader :name
 
@@ -18,9 +16,10 @@ class Station
 
   def print_count_trains_by_type
     puts "На станции поездов:"
-    Train::TYPES.each_with_index do |type, index|
-        count = @trains_on_station.count{ |train| train.type == type }
-        puts "#{index + 1}. #{type}: #{count}" if count > 0
+    types_trains = @trains_on_station.uniq { |train| train.class }
+    types_trains.each_with_index do |classtype, index|
+      count = @trains_on_station.count{ |train| train.class == classtype.class }
+      puts "#{index + 1}. #{classtype.class.type}: #{count}" if count > 0
     end
   end
 
