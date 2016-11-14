@@ -1,12 +1,13 @@
 class Wagon
   attr_accessor :train
   attr_reader :number
+  include Manufacturer
 
   def initialize(number)
     @number = number
   end
 
-  def can_hitch?
-    @train.nil?
+  def can_be_attached?(type)
+    @train.nil? && self.class.to_s == type
   end
 end

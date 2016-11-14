@@ -1,16 +1,17 @@
-require_relative "train"
-require_relative "passenger_train"
-require_relative "cargo_train"
-require_relative "station"
-require_relative "route"
-require_relative "wagon"
-require_relative "cargo_wagon"
-require_relative "passenger_wagon"
-require_relative "string"
+require_relative "modules/manufacturer"
+require_relative "models/train"
+require_relative "models/train/passenger_train"
+require_relative "models/train/cargo_train"
+require_relative "models/station"
+require_relative "models/route"
+require_relative "models/wagon"
+require_relative "models/wagon/cargo_wagon"
+require_relative "models/wagon/passenger_wagon"
+require_relative "core_ext/string/colorize"
 
-$stations = Hash.new(0)
-$trains = Hash.new(0)
-$wagons = Hash.new(0)
+@stations = Hash.new(0)
+@trains = Hash.new(0)
+@wagons = Hash.new(0)
 
 INPUT_EXIT = "exit"
 
@@ -22,10 +23,9 @@ def create_station
   puts "Вы создаете станцию. Введите название новой станции:".green
   loop do
     name_station = gets.chomp
-    if name_station == INPUT_EXIT
-      message_exit_reserved
-    elsif $stations[name_station] == 0
-      $stations[name_station] = Station.new(name_station)
+    next message_exit_reserved if name_station == INPUT_EXIT
+    if @stations[name_station] == 0
+      @stations[name_station] = Station.new(name_station)
       puts "Создана станция с названием #{name_station}".red
       break
     else
@@ -39,25 +39,9 @@ def create_train
   message = ""
   loop do
     number = gets.chomp
-    if number == INPUT_EXIT
-      message_exit_reserved
-    elsif $trains[number] == 0
-      puts "Введите тип поезда: 1. Грузовой, 2. Пассажирский:".green
-      loop do
-        type = gets.chomp.to_i
-        case type
-        when 1
-          $trains[number] = CargoTrain.new(number)
-          message = "грузовой поезд с номером #{number}"
-          break
-        when 2
-          $trains[number] = PassengerTrain.new(number)
-          message = "пассажирский поезд с номером #{number}"
-          break
-        else
-          puts "Нет такого типа, повторите ввод:".green
-        end
-      end
+    next message_exit_reserved if number == INPUT_EXIT
+    if @trains[number] == 0
+      message = select_type_train(number)
       break
     else
       puts "Поезд с таким номером уже существует, повторите ввод:".green
@@ -66,30 +50,31 @@ def create_train
   puts "Создан #{message}".red
 end
 
+def select_type_train(number)
+  puts "Введите тип поезда: 1. Грузовой, 2. Пассажирский:".green
+  loop do
+    type = gets.chomp.to_i
+    case type
+    when 1
+      @trains[number] = CargoTrain.new(number)
+      return "грузовой поезд с номером #{number}"
+    when 2
+      @trains[number] = PassengerTrain.new(number)
+      return "пассажирский поезд с номером #{number}"
+    else
+      puts "Нет такого типа, повторите ввод:".green
+    end
+  end
+end
+
 def create_wagon
   puts "Вы создаете новый вагон. Введите номер вагона:".green
   message = ""
   loop do
     number = gets.chomp
-    if number == INPUT_EXIT
-      message_exit_reserved
-    elsif $wagons[number] == 0
-      puts "Введите тип вагона: 1. Грузовой, 2. Пассажирский:".green
-      loop do
-        type = gets.chomp.to_i
-        case type
-        when 1
-          $wagons[number] = CargoWagon.new(number)
-          message = "грузовой вагон с номером #{number}"
-          break
-        when 2
-          $wagons[number] = PassengerWagon.new(number)
-          message = "пассажирский вагон с номером #{number}"
-          break
-        else
-          puts "Нет такого типа, повторите ввод:".green
-        end
-      end
+    next message_exit_reserved if number == INPUT_EXIT
+    if @wagons[number] == 0
+      message = select_type_wagon(number)
       break
     else
       puts "Вагон с таким номером уже существует, повторите ввод:".green
@@ -98,7 +83,24 @@ def create_wagon
   puts "Создан #{message}".red
 end
 
-def hitch_wagon_to_train
+def select_type_wagon(number)
+  puts "Введите тип вагона: 1. Грузовой, 2. Пассажирский:".green
+  loop do
+    type = gets.chomp.to_i
+    case type
+    when 1
+      @wagons[number] = CargoWagon.new(number)
+      return "грузовой вагон с номером #{number}"
+    when 2
+      @wagons[number] = PassengerWagon.new(number)
+      return "пассажирский вагон с номером #{number}"      
+    else
+      puts "Нет такого типа, повторите ввод:".green
+    end
+  end
+end
+
+def attach_wagon_to_train
   loop do
     puts "===".blue
     puts "Вы находитесь в меню прицепки вагона к поезду.".green
@@ -106,7 +108,7 @@ def hitch_wagon_to_train
     puts "Для перехода в главное меню введите #{INPUT_EXIT}".red
     number = gets.chomp
     break if number == INPUT_EXIT
-    train = $trains[number]
+    train = @trains[number]
     if train == 0
       puts "Такого поезда не существует, повторите ввод:".green
     else
@@ -115,11 +117,11 @@ def hitch_wagon_to_train
       puts "Для перехода в меню выше введите #{INPUT_EXIT}".red
       number_wagon = gets.chomp
       break if number_wagon == INPUT_EXIT
-      wagon = $wagons[number_wagon]
+      wagon = @wagons[number_wagon]
       if wagon == 0
         puts "Такого вагона не существует, повторите ввод:".green
       else
-        wagon_added = train.hitch_wagon(wagon)
+        wagon_added = train.attach_wagon(wagon)
         if wagon_added
           message = "Вагон #{number_wagon} добавлен к поезду #{number}."
         else
@@ -140,7 +142,7 @@ def detach_wagon_from_train
     puts "Для перехода в главное меню введите #{INPUT_EXIT}".red
     number = gets.chomp
     break if number == INPUT_EXIT
-    train = $trains[number]
+    train = @trains[number]
     if train == 0
       puts "Такого поезда не существует, повторите ввод:".green
     else
@@ -151,7 +153,7 @@ def detach_wagon_from_train
       loop do
         number_wagon = gets.chomp
         break if number_wagon == INPUT_EXIT
-        wagon = $wagons[number_wagon]
+        wagon = @wagons[number_wagon]
         if wagon == 0
           puts "Такого вагона не существует, повторите ввод:".green
         else
@@ -177,7 +179,7 @@ def send_train_to_staion
     puts "Для перехода в главное меню введите #{INPUT_EXIT}".red
     name_station = gets.chomp
     break if name_station == INPUT_EXIT
-    station = $stations[name_station]
+    station = @stations[name_station]
     if station == 0
       puts "Такой станции не существует, повторите ввод:".green
     else
@@ -187,7 +189,7 @@ def send_train_to_staion
       loop do
         number = gets.chomp
         break if number == INPUT_EXIT
-        train = $trains[number]
+        train = @trains[number]
         if train == 0
           puts "Такого поезда не существует, повторите ввод:".green
         else
@@ -231,17 +233,17 @@ end
 
 def print_list_trains
   puts "=== Список существующих поездов:".green
-  $trains.each { |key, value| puts key }
+  @trains.each_key { |key| puts key }
 end
 
 def print_list_stations
   puts "=== Список существующих станций:".green
-  $stations.each { |key, value| puts key }
+  @stations.each_key { |key| puts key }
 end
 
 def print_list_wagons
   puts "=== Список существующих вагонов:".green
-  $wagons.each { |key, value| puts key }
+  @wagons.each_key { |key| puts key }
 end
 
 def print_count_trains_by_type
@@ -252,7 +254,7 @@ def print_count_trains_by_type
     puts "Для перехода в главное меню введите #{INPUT_EXIT}".red
     name_station = gets.chomp
     break if name_station == INPUT_EXIT
-    station = $stations[name_station]
+    station = @stations[name_station]
     if station == 0
       puts "Такой станции не существует, повторите ввод:".green
     else
@@ -270,7 +272,7 @@ def menu_trains_by_station
     puts "Для перехода в меню выше введите #{INPUT_EXIT}".red
     name_station = gets.chomp
     break if name_station == INPUT_EXIT
-    station = $stations[name_station]
+    station = @stations[name_station]
     if station == 0
       puts "Введенной станции не существует".red
     else
@@ -281,22 +283,22 @@ def menu_trains_by_station
 end
 
 def create_info
-  $stations["Moscow"] = Station.new("Moscow")
-  $stations["Spb"] = Station.new("Spb")
-  $stations["Omsk"] = Station.new("Omsk")
-  $stations["Krd"] = Station.new("Krd")
-  $stations["Tula"] = Station.new("Tula")
+  @stations["Moscow"] = Station.new("Moscow")
+  @stations["Spb"] = Station.new("Spb")
+  @stations["Omsk"] = Station.new("Omsk")
+  @stations["Krd"] = Station.new("Krd")
+  @stations["Tula"] = Station.new("Tula")
 
-  $trains["444"] = CargoTrain.new("444")
-  $trains["872"] = CargoTrain.new("872")
-  $trains["980"] = PassengerTrain.new("980")
-  $trains["578"] = PassengerTrain.new("578")
+  @trains["444"] = CargoTrain.new("444")
+  @trains["872"] = CargoTrain.new("872")
+  @trains["980"] = PassengerTrain.new("980")
+  @trains["578"] = PassengerTrain.new("578")
 
-  $wagons["134"] = CargoWagon.new("134")
-  $wagons["222"] = CargoWagon.new("222")
-  $wagons["452"] = CargoWagon.new("452")
-  $wagons["777"] = PassengerWagon.new("777")
-  $wagons["890"] = PassengerWagon.new("890")
+  @wagons["134"] = CargoWagon.new("134")
+  @wagons["222"] = CargoWagon.new("222")
+  @wagons["452"] = CargoWagon.new("452")
+  @wagons["777"] = PassengerWagon.new("777")
+  @wagons["890"] = PassengerWagon.new("890")
 end
 
 loop do
@@ -322,7 +324,7 @@ loop do
   when 3
     create_wagon
   when 4
-    hitch_wagon_to_train
+    attach_wagon_to_train
   when 5
     detach_wagon_from_train
   when 6
