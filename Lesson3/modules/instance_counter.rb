@@ -7,15 +7,16 @@ module InstanceCounter
 
   module ClassMethods
     attr_accessor :instances
-    private
-    :instances=
+    private :instances=
   end
 
   module InstanceMethods
     protected
     def register_instance
-      self.class.instances ||= 0
-      self.class.instances += 1
+      self.class.send :instances=, (self.class.instances || 0) + 1
+      #возможно ли заставить работать конструкцию?
+      #self.class.instances ||= 0
+      #self.class.instances += 1
     end
   end
 

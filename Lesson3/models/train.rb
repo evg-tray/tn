@@ -7,6 +7,9 @@ class Train
   @@trains = []
 
   def initialize(number)
+    if self.class.find(number)
+      raise ArgumentError.new("Поезд с номером #{number} уже существует.")
+    end
     @number = number
     @wagons = []
     @speed = 0
@@ -97,8 +100,7 @@ class Train
   end
 
   def self.find(number)
-    trains = @@trains.select { |train| train.number == number }
-    trains[0] if trains.count > 0
+    @@trains.detect { |train| train.number == number }
   end
 
   private
