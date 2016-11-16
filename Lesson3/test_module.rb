@@ -4,7 +4,7 @@ class A
   include InstanceCounter
 
   def initialize
-    register_instance
+    register_instance!
   end
 end
 
