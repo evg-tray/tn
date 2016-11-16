@@ -1,8 +1,11 @@
+require_relative "wagon"
+require_relative "../modules/manufacturer"
 class Train
   attr_accessor :speed, :wagons
   attr_reader :number
+  private :wagons=
   TYPE = "Поезд"
-  TYPE_WAGON = "Wagon"
+  TYPE_WAGON = Wagon
   include Manufacturer
   @@trains = []
 
@@ -100,12 +103,10 @@ class Train
   end
 
   def self.find(number)
-    @@trains.detect { |train| train.number == number }
+    @@trains.detect { |train| train.number == number && (self == Train || train.class == self) }
   end
 
   private
-
-  :wagons=
 
   def goto_depot
     @current_station = nil

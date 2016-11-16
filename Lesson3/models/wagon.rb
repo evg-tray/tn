@@ -1,3 +1,4 @@
+require_relative "../modules/manufacturer"
 class Wagon
   attr_accessor :train
   attr_reader :number
@@ -8,6 +9,6 @@ class Wagon
   end
 
   def can_be_attached?(type)
-    @train.nil? && self.class.to_s == type
+    @train.nil? && self.class == type
   end
 end
