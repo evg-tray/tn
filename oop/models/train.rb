@@ -1,20 +1,31 @@
+require_relative "wagon"
+require_relative "../modules/manufacturer"
 class Train
-  attr_accessor :speed
-  attr_reader :number, :wagons
+  attr_accessor :speed, :wagons
+  attr_reader :number
+  private :wagons=
+  TYPE = "Поезд"
+  TYPE_WAGON = Wagon
+  include Manufacturer
+  @@trains = []
 
   def initialize(number)
+    if self.class.find(number)
+      raise ArgumentError.new("Поезд с номером #{number} уже существует.")
+    end
     @number = number
     @wagons = []
     @speed = 0
+    @@trains << self
   end
 
   def stop
-    self.speed = 0
+    @speed = 0
   end
 
-  def hitch_wagon(wagon)
-    if stopped? && wagon.can_hitch?
-      self.wagons << wagon
+  def attach_wagon(wagon)
+    if stopped? && wagon.can_be_attached?(self.class::TYPE_WAGON)
+      @wagons << wagon
       wagon.train = self
       true
     else
@@ -24,7 +35,7 @@ class Train
 
   def detach_wagon(wagon)
     if stopped? && @wagons.include?(wagon)
-      self.wagons.delete(wagon)
+      @wagons.delete(wagon)
       wagon.train = nil
       true
     else
@@ -88,14 +99,15 @@ class Train
   end
 
   def self.type
-    "Поезд"
+    self.class::TYPE
+  end
+
+  def self.find(number)
+    @@trains.detect { |train| train.number == number && (self == Train || train.class == self) }
   end
 
   private
-  #для списка вагонов есть методы удаления/добавления
-  attr_writer :wagons
-  #поезд в депо отправляется методами перемещения между станциями
-  #нельзя отправить его в депо посреди пути
+
   def goto_depot
     @current_station = nil
     @route = nil
