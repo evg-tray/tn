@@ -35,35 +35,38 @@ def create_station
 end
 
 def create_train
-  puts "Вы создаете поезд. Введите номер поезда:".green
+  puts "Вы создаете поезд. Введите тип поезда:".green
+  puts "1. Грузовой"
+  puts "2. Пассажирский"
   message = ""
-  loop do
-    number = gets.chomp
-    next message_exit_reserved if number == INPUT_EXIT
-    if @trains[number] == 0
-      message = select_type_train(number)
-      break
-    else
-      puts "Поезд с таким номером уже существует, повторите ввод:".green
-    end
-  end
-  puts "Создан #{message}".red
-end
-
-def select_type_train(number)
-  puts "Введите тип поезда: 1. Грузовой, 2. Пассажирский:".green
+  type_train = ""
   loop do
     type = gets.chomp.to_i
     case type
     when 1
-      @trains[number] = CargoTrain.new(number)
-      return "грузовой поезд с номером #{number}"
+      type_train = CargoTrain
+      message = "грузовой поезд"
+      break
     when 2
-      @trains[number] = PassengerTrain.new(number)
-      return "пассажирский поезд с номером #{number}"
+      type_train = PassengerTrain
+      message = "пассажирский поезд"
+      break
     else
       puts "Нет такого типа, повторите ввод:".green
     end
+  end
+  puts "Введите номер поезда:".green
+  attempt = 0
+  begin
+    attempt += 1
+    number = gets.chomp
+    raise message_exit_reserved if number == INPUT_EXIT
+    @trains[number] = type_train.new(number)
+    puts "Создан #{message} с номером #{number}".red
+  rescue Exception => e
+    print e.message.red
+    puts " Повторите ввод(попытка #{attempt} из 5):".green
+    retry if attempt < 5
   end
 end
 
@@ -93,7 +96,7 @@ def select_type_wagon(number)
       return "грузовой вагон с номером #{number}"
     when 2
       @wagons[number] = PassengerWagon.new(number)
-      return "пассажирский вагон с номером #{number}"      
+      return "пассажирский вагон с номером #{number}"
     else
       puts "Нет такого типа, повторите ввод:".green
     end
@@ -289,10 +292,10 @@ def create_info
   @stations["Krd"] = Station.new("Krd")
   @stations["Tula"] = Station.new("Tula")
 
-  @trains["444"] = CargoTrain.new("444")
-  @trains["872"] = CargoTrain.new("872")
-  @trains["980"] = PassengerTrain.new("980")
-  @trains["578"] = PassengerTrain.new("578")
+  @trains["44444"] = CargoTrain.new("44444")
+  @trains["87222"] = CargoTrain.new("87222")
+  @trains["980-вв"] = PassengerTrain.new("980-вв")
+  @trains["АА578"] = PassengerTrain.new("АА578")
 
   @wagons["134"] = CargoWagon.new("134")
   @wagons["222"] = CargoWagon.new("222")

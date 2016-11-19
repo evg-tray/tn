@@ -1,14 +1,20 @@
+require_relative "../modules/valid"
+require_relative "train"
 class Station
   attr_reader :name
+  FORMAT_NAME = /^[a-zа-я\d]+-?[a-zа-я\d]+$/i
+  include Valid
   @@stations = []
 
   def initialize(name_station)
     @name = name_station
+    validate!
     @trains_on_station = []
     @@stations << self
   end
 
   def take_train(train)
+    raise "Переданный параметр не является поездом!" unless train.is_a? Train
     @trains_on_station << train
   end
 
@@ -33,4 +39,11 @@ class Station
     @@stations
   end
 
+  private
+
+  def validate!
+    raise "Неправильный формат имени станции!" if @name !~ FORMAT_NAME
+    true
+  end
+  
 end
