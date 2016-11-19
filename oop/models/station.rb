@@ -39,11 +39,14 @@ class Station
     @@stations
   end
 
+  def each_train
+    @trains_on_station.each { |train| yield(train) }
+  end
+
   private
 
   def validate!
     raise "Неправильный формат имени станции!" if @name !~ FORMAT_NAME
-    true
   end
-  
+
 end

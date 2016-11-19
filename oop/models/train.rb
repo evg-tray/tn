@@ -26,7 +26,7 @@ class Train
   end
 
   def attach_wagon(wagon)
-    validate_wagon!
+    validate_wagon!(wagon)
     if stopped? && wagon.can_be_attached?(self.class::TYPE_WAGON)
       @wagons << wagon
       wagon.train = self
@@ -37,7 +37,7 @@ class Train
   end
 
   def detach_wagon(wagon)
-    validate_wagon!
+    validate_wagon!(wagon)
     if stopped? && @wagons.include?(wagon)
       @wagons.delete(wagon)
       wagon.train = nil
@@ -101,7 +101,7 @@ class Train
   end
 
   def self.type
-    self.class::TYPE
+    self::TYPE
   end
 
   def self.find(number)
@@ -109,11 +109,13 @@ class Train
     @@trains.detect { |train| train.number == number && (self == Train || train.class == self) }
   end
 
+  def each_wagon
+    @wagons.each { |wagon| yield(wagon) }
+  end
   protected
 
   def validate!
     self.class.validate_number!(@number)
-    true
   end
 
   def self.validate_number!(number)
@@ -124,7 +126,7 @@ class Train
     raise "Поезд с номером #{@number} уже существует!" if self.class.find(@number)
   end
 
-  def validate_wagon!
+  def validate_wagon!(wagon)
     raise "Переданный параметр не является вагоном!" unless wagon.is_a? Wagon
   end
 
