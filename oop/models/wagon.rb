@@ -20,7 +20,6 @@ class Wagon
 
   def validate!
     raise "Неправильный формат номера вагона!" if @number !~ FORMAT_NUMBER
-    true
   end
-  
+
 end

@@ -14,6 +14,7 @@ require_relative "core_ext/string/colorize"
 @wagons = Hash.new(0)
 
 INPUT_EXIT = "exit"
+MAX_ATTEMPTS = 5
 
 def message_exit_reserved
   puts "#{INPUT_EXIT} зарезервировано системой, введите другое значение:".red
@@ -35,26 +36,7 @@ def create_station
 end
 
 def create_train
-  puts "Вы создаете поезд. Введите тип поезда:".green
-  puts "1. Грузовой"
-  puts "2. Пассажирский"
-  message = ""
-  type_train = ""
-  loop do
-    type = gets.chomp.to_i
-    case type
-    when 1
-      type_train = CargoTrain
-      message = "грузовой поезд"
-      break
-    when 2
-      type_train = PassengerTrain
-      message = "пассажирский поезд"
-      break
-    else
-      puts "Нет такого типа, повторите ввод:".green
-    end
-  end
+  type_train = input_type_train
   puts "Введите номер поезда:".green
   attempt = 0
   begin
@@ -62,11 +44,28 @@ def create_train
     number = gets.chomp
     raise message_exit_reserved if number == INPUT_EXIT
     @trains[number] = type_train.new(number)
-    puts "Создан #{message} с номером #{number}".red
+    puts "Создан #{@trains[number].class.type} поезд с номером #{number}".red
   rescue Exception => e
     print e.message.red
-    puts " Повторите ввод(попытка #{attempt} из 5):".green
-    retry if attempt < 5
+    puts " Повторите ввод(попытка #{attempt} из #{MAX_ATTEMPTS}):".green
+    retry if attempt < MAX_ATTEMPTS
+  end
+end
+
+def input_type_train
+  puts "Вы создаете поезд. Введите тип поезда:".green
+  puts "1. Грузовой"
+  puts "2. Пассажирский"
+  loop do
+    type = gets.chomp.to_i
+    case type
+    when 1
+      return CargoTrain
+    when 2
+      return PassengerTrain
+    else
+      puts "Нет такого типа, повторите ввод:".green
+    end
   end
 end
 
@@ -92,14 +91,35 @@ def select_type_wagon(number)
     type = gets.chomp.to_i
     case type
     when 1
-      @wagons[number] = CargoWagon.new(number)
-      return "грузовой вагон с номером #{number}"
+      volume = volume_cargo_wagon
+      @wagons[number] = CargoWagon.new(number, volume)
+      return "грузовой вагон с номером #{number} и объемом #{volume}"
     when 2
-      @wagons[number] = PassengerWagon.new(number)
-      return "пассажирский вагон с номером #{number}"
+      count_seats = count_seats_passenger_wagon
+      @wagons[number] = PassengerWagon.new(number, count_seats)
+      return "пассажирский вагон с номером #{number} и количеством мест #{count_seats}"
     else
       puts "Нет такого типа, повторите ввод:".green
     end
+  end
+end
+
+def volume_cargo_wagon
+  puts "Введите объем вагона:".green
+  loop do
+    volume = gets.chomp.to_f
+    next puts "Объем должен быть числом больше 0.".red if volume <= 0
+    return volume
+  end
+end
+
+def count_seats_passenger_wagon
+  puts "Введите количество мест в вагоне:".green
+  loop do
+    count_seats = gets.chomp.to_i
+    message = "Количество мест должно быть целым положительным числом.".red
+    next puts message if count_seats <= 0
+    return count_seats
   end
 end
 
@@ -215,6 +235,8 @@ def menu_lists_stations_trains
     puts "3. Количество поездов на станции"
     puts "4. Список поездов"
     puts "5. Список вагонов"
+    puts "6. Список вагонов у поезда"
+    puts "7. Список поездов на станции в формате"
     puts "Любая другая команда - переход к главному меню".red
     command = gets.chomp.to_i
     case command
@@ -228,6 +250,10 @@ def menu_lists_stations_trains
       print_list_trains
     when 5
       print_list_wagons
+    when 6
+      print_list_wagons_by_train
+    when 7
+      print_list_trains_format
     else
       break
     end
@@ -285,6 +311,94 @@ def menu_trains_by_station
   end
 end
 
+def print_list_wagons_by_train
+  loop do
+    puts "===".blue
+    puts "Вы находитесь в меню вывода списка вагонов поезда.".green
+    puts "Для какой какого поезда вывести список вагонов?".green
+    puts "Введите номер поезда:".green
+    puts "Для перехода в меню выше введите #{INPUT_EXIT}".red
+    number = gets.chomp
+    break if number == INPUT_EXIT
+    train = @trains[number]
+    if train == 0
+      puts "Поезда с номером #{number} не существует".red
+    else
+      puts "Вагоны у поезда номер #{number}:".green
+      train.each_wagon do |wagon|
+        if train.class == CargoTrain
+          message = "#{wagon.number}, грузовой, свободное место: "
+          message += "#{wagon.free_volume}, занятое место: #{wagon.busy_volume}"
+          puts message
+        else
+          message = "#{wagon.number}, пассажирский, свободные места: "
+          message += "#{wagon.free_seats}, занятые места: #{wagon.busy_seats}"
+          puts message
+        end
+      end
+    end
+  end
+end
+
+def print_list_trains_format
+  loop do
+    puts "===".blue
+    puts "Вы находитесь в меню вывода списка поездов на станции.".green
+    puts "Для какой станции вывести список поездов? Введите название станции:".green
+    puts "Для перехода в меню выше введите #{INPUT_EXIT}".red
+    name_station = gets.chomp
+    break if name_station == INPUT_EXIT
+    station = @stations[name_station]
+    if station == 0
+      puts "Введенной станции не существует".red
+    else
+      puts "Поезда на станции #{name_station} в формате:".green
+      station.each_train do |train|
+        puts "#{train.number}, тип: #{train.class.type}, вагонов: #{train.wagons.count}"
+      end
+    end
+  end
+end
+
+def take_seat_cargo
+  loop do
+    puts "Введите номер вагона:".green
+    puts "Для перехода в главное меню введите #{INPUT_EXIT}".red
+    number = gets.chomp
+    break if number == INPUT_EXIT
+    wagon = @wagons[number]
+    if wagon == 0
+      puts "Введенного вагона не существует".red
+    else
+      if wagon.class == CargoWagon
+        take_cargo(wagon)
+      else
+        take_passengers(wagon)
+      end
+    end
+  end
+end
+
+def take_cargo(wagon)
+  puts "Введите объем груза:"
+  attempt = 0
+  begin
+    attempt += 1
+    volume = gets.chomp.to_f
+    wagon.take_cargo(volume)
+  rescue Exception => e
+    print e.message.red
+    puts " Повторите ввод(попытка #{attempt} из #{MAX_ATTEMPTS}):".green
+    retry if attempt < MAX_ATTEMPTS
+  end
+end
+
+def take_passengers(wagon)
+  puts "Введите количество пассажиров:"
+  count = gets.chomp.to_i
+  count.times { wagon.take_passenger }
+end
+
 def create_info
   @stations["Moscow"] = Station.new("Moscow")
   @stations["Spb"] = Station.new("Spb")
@@ -297,11 +411,26 @@ def create_info
   @trains["980-вв"] = PassengerTrain.new("980-вв")
   @trains["АА578"] = PassengerTrain.new("АА578")
 
-  @wagons["134"] = CargoWagon.new("134")
-  @wagons["222"] = CargoWagon.new("222")
-  @wagons["452"] = CargoWagon.new("452")
-  @wagons["777"] = PassengerWagon.new("777")
-  @wagons["890"] = PassengerWagon.new("890")
+  @wagons["134"] = CargoWagon.new("134", 50)
+  @wagons["222"] = CargoWagon.new("222", 45.5)
+  @wagons["452"] = CargoWagon.new("452", 98.3)
+  @wagons["777"] = PassengerWagon.new("777", 15)
+  @wagons["890"] = PassengerWagon.new("890", 25)
+
+  @stations["Moscow"].take_train(@trains["44444"])
+  @stations["Moscow"].take_train(@trains["87222"])
+  @stations["Moscow"].take_train(@trains["980-вв"])
+  @stations["Moscow"].take_train(@trains["АА578"])
+
+  @trains["44444"].attach_wagon(@wagons["134"])
+  @trains["44444"].attach_wagon(@wagons["222"])
+  @trains["44444"].attach_wagon(@wagons["452"])
+
+  @trains["АА578"].attach_wagon(@wagons["777"])
+  @trains["АА578"].attach_wagon(@wagons["890"])
+
+  @wagons["134"].take_cargo(33)
+  5.times { @wagons["777"].take_passenger }
 end
 
 loop do
@@ -315,6 +444,7 @@ loop do
   puts "6. Поместить поезд на станцию"
   puts "7. Просмотр списков станций, поездов, вагонов"
   puts "8. Создать несколько предопределенных станций, поездов, вагонов"
+  puts "9. Занять место/загрузить груз в вагон"
   puts "Любая другая ввод - выход из программы".red
   puts "=====".blue
 
@@ -336,6 +466,8 @@ loop do
     menu_lists_stations_trains
   when 8
     create_info
+  when 9
+    take_seat_cargo
   else
     break
   end
