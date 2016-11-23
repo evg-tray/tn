@@ -1,6 +1,11 @@
-require_relative '../modules/valid'
+require_relative '../modules/validation'
 require_relative 'station'
 class Route
+  include Validation
+
+  validate :start_station, :type, Station
+  validate :end_station, :type, Station
+
   def initialize(start_station, end_station)
     @stations_in_route = [start_station, end_station]
     validate!
@@ -21,7 +26,7 @@ class Route
 
   def delete_station(station)
     validate_argument_station!(station)
-    return unless station == @start_station || station == @end_station
+    return if station == @start_station || station == @end_station
     @stations_in_route.delete(station)
   end
 
@@ -41,13 +46,6 @@ class Route
   end
 
   private
-
-  def validate!
-    unless station?(start_station)
-      raise 'Начальная станция не является станцией!'
-    end
-    raise 'Конечная станция не является станцией!' unless station?(end_station)
-  end
 
   def validate_argument_station!(station)
     raise 'Переданный параметр не является станцией!' unless station?(station)

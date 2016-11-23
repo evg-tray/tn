@@ -1,12 +1,13 @@
-require_relative '../modules/valid'
+require_relative '../modules/validation'
 require_relative 'train'
 class Station
-  include Valid
+  include Validation
 
   FORMAT_NAME = /^[a-zа-я\d]+-?[a-zа-я\d]+$/i
 
   attr_reader :name
 
+  validate :name, :format, FORMAT_NAME
   @@stations = []
 
   def self.all
@@ -46,9 +47,4 @@ class Station
     @trains_on_station.each(&block)
   end
 
-  private
-
-  def validate!
-    raise 'Неправильный формат имени станции!' if @name !~ FORMAT_NAME
-  end
 end
