@@ -1,7 +1,6 @@
-require_relative "../modules/valid"
-require_relative "station"
+require_relative '../modules/valid'
+require_relative 'station'
 class Route
-
   def initialize(start_station, end_station)
     @stations_in_route = [start_station, end_station]
     validate!
@@ -22,7 +21,8 @@ class Route
 
   def delete_station(station)
     validate_argument_station!(station)
-    @stations_in_route.delete(station) if station != @start_station && station != @end_station
+    return unless station == @start_station || station == @end_station
+    @stations_in_route.delete(station)
   end
 
   def print_stations
@@ -43,16 +43,17 @@ class Route
   private
 
   def validate!
-    raise "Начальная станция не является станцией!" unless station?(start_station)
-    raise "Конечная станция не является станцией!" unless station?(end_station)
+    unless station?(start_station)
+      raise 'Начальная станция не является станцией!'
+    end
+    raise 'Конечная станция не является станцией!' unless station?(end_station)
   end
 
   def validate_argument_station!(station)
-    raise "Переданный параметр не является станцией!" unless station?(station)
+    raise 'Переданный параметр не является станцией!' unless station?(station)
   end
 
   def station?(station)
     station.is_a? Station
   end
-
 end

@@ -16,11 +16,15 @@ class PassengerWagon < Wagon
     @count_seats - @busy_seats
   end
 
+  def to_s
+    "#{@number}, пассажирский, свободные места: #{free_seats}, " \
+    "занятые: #{busy_seats}"
+  end
+
   private
 
   def validate_count_seats!
-    raise "Неверно указано количество мест!" unless @count_seats.is_a? Integer
-    raise "Количество мест должно быть больше 0!" unless @count_seats > 0
+    raise 'Неверно указано количество мест!' unless @count_seats.is_a? Integer
+    raise 'Количество мест должно быть больше 0!' unless @count_seats > 0
   end
-
 end

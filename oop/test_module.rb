@@ -1,4 +1,4 @@
-require_relative "modules/instance_counter"
+require_relative 'modules/instance_counter'
 
 class A
   include InstanceCounter
@@ -8,10 +8,10 @@ class A
   end
 end
 
-5.times{A.new}
+5.times { A.new }
 begin
   A.instances = 10
 rescue
-  puts "Ошибка установки"
+  puts 'Ошибка установки'
 end
 puts A.instances
