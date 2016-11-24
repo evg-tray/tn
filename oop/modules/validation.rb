@@ -11,26 +11,30 @@ module Validation
       raise TypeError.new("Name is not symbol") unless name.is_a?(Symbol)
       is_type = type.is_a?(Symbol) && [:presence, :format, :type].include?(type)
       raise TypeError.new("Unknown type validation") unless is_type
-      method_name = "validate_#{name}_#{type}!"
-      define_method(method_name) do
-        var = instance_variable_get("@#{name}".to_sym)
-        case type
-        when :presence
-          raise "#{name} don't must be nil" if var.nil?
-        when :format
-          raise "Wrong format: #{name}" if var !~ option
-        when :type
-          raise "Wrong type: #{name}" unless var.is_a? option
-        end
-      end
-      @validations ||= []
-      @validations << method_name
+      validate_key = "#{name}_#{type}".to_sym
+      @validations ||= {}
+      @validations[validate_key] = {name: name, type: type, option: option}
     end
   end
 
   module InstanceMethods
     def validate!
-      self.class.validations.each { |method| eval(method) }
+      current_class = self.class
+      until Object === current_class.superclass
+        current_class = current_class.superclass
+      end
+      return unless current_class.instance_variables.include?(:@validations)
+      current_class.validations.each_value do |value|
+        attribute = instance_variable_get("@#{value[:name]}")
+        case value[:type]
+        when :presence
+          validate_presence(attribute)
+        when :format
+          validate_format(attribute, value[:option])
+        when :type
+          validate_type(attribute, value[:option])
+        end
+      end
     end
 
     def valid?
@@ -38,6 +42,18 @@ module Validation
       true
     rescue
       false
+    end
+
+    def validate_presence(attribute)
+      raise "#{attribute} don't must be nil" if attribute.nil?
+    end
+
+    def validate_format(attribute, format)
+      raise "Wrong format: #{attribute}" if attribute !~ format
+    end
+
+    def validate_type(attribute, class_name)
+      raise "Wrong type: #{attribute}" unless attribute.is_a? class_name
     end
   end
 end
