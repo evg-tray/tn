@@ -1,9 +1,9 @@
 require_relative 'wagon'
 require_relative 'route'
 require_relative '../modules/manufacturer'
-require_relative '../modules/valid'
+require_relative '../modules/validation'
 class Train
-  include Valid
+  include Validation
   include Manufacturer
 
   TYPE = 'Поезд'.freeze
@@ -12,6 +12,8 @@ class Train
 
   attr_accessor :speed
   attr_reader :number, :wagons
+
+  validate :number, :format, FORMAT_NUMBER
 
   @@trains = []
 
@@ -131,10 +133,6 @@ class Train
   end
 
   protected
-
-  def validate!
-    self.class.send :validate_number!, @number
-  end
 
   def validate_exist_train!
     return unless self.class.find(@number)
